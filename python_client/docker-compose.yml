@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+    algo_client:
+        build: .
+        container_name: algo_client
+        image: algo_client
+        restart: always
+        network_mode: "host"
+        command: bash -c "sleep 10000"

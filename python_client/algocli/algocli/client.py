@@ -1,10 +1,9 @@
-import bot
 import requests
 import json
-import argparse
 import logging
 import time
-from model import Card, Player, GameState, Color, Action, Attack, Stay
+
+from .model import Card, Player, GameState, Color, Action, Attack, Stay
 
 
 class Client:
@@ -106,25 +105,28 @@ class Client:
                     if c['isPicked']:
                         card_picked = card_
 
-                p = Player(pid, tuple(cards), card_picked, score)
+                p = Player(pid, cards, card_picked, score)
                 players.append(p)
 
             turn = players[j_current_turn - 1].id
-            s = GameState(tuple(players), turn, j_deck_size)
+            s = GameState(players, turn, j_deck_size)
             return s
 
         self.game_state_id = 0  # 0-indexed
 
         jr = self.request('games')
+        if not jr:
+            return
         curr_state = state_from_json(jr)
         self.logger.info(repr(curr_state))
         yield curr_state
         time.sleep(freq)
         while True:
             jr = self.request('games')
+            if not jr:
+                return
             state = state_from_json(jr)
             if state == curr_state:
-                print('?')
                 time.sleep(freq)
                 continue
             curr_state = state
@@ -151,41 +153,3 @@ class Client:
         else:
             assert isinstance(action, Stay)
             self.request('keep')
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--room_id', required=False, type=int)
-    parser.add_argument('--domain', default='http://127.0.0.1:3000')
-    parser.add_argument('--token', required=True)
-    args = parser.parse_args()
-
-    cli1 = Client(args.token, args.domain)
-    cli1.request('me')
-    # cli2.request('me')
-    # cli1.request('create_room')
-    # cli1.request('join_room', '8')
-    # cli2.request('join_room', '8')
-    # cli1.request('leave_room')
-    # cli2.request('leave_room')
-    # cli1.request('ready')
-    # cli2.request('ready')
-    # cli2.request('attack', json_payload={'card_id': 4, 'value': 3})
-    # cli1.request('attack', json_payload={'card_id': 1, 'value': 3})
-
-    # cli1.request('games')
-    cli1.logger.setLevel(logging.INFO)
-
-    for state in cli1.gen_game_state():
-        action = bot.on_game_state(state, cli1.id)
-        if not action:
-            print('!')
-            time.sleep(1)
-            continue
-        me = next(p for p in state.players if p.id == cli1.id)
-        pick = isinstance(action, Attack) and not me.picked
-        print('pick', pick)
-        print('com_cid', action.commit_cid)
-        cli1.do_action(action, pick=pick)
-
-    # cli2.request('games')

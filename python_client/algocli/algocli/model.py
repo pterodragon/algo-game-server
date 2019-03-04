@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Tuple
+from typing import List
 
 """
 Bot writer should implement the following callback
@@ -56,7 +56,7 @@ class Player:
     "picked" is inserted into "cards" after that player's turn ends
     '''
     id: str
-    cards: Tuple[Card] = field(default_factory=list)  # algo-ordered
+    cards: List[Card] = field(default_factory=list)  # algo-ordered
     picked: Card = None
     chips: int = 0
 
@@ -70,7 +70,7 @@ class Player:
 
 @dataclass
 class GameState:
-    players: Tuple[Player]
+    players: List[Player]
     turn: str  # player id, CAUTION: not the index from the client
     deck_size: int = 0
 
